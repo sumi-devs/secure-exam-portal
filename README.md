@@ -90,7 +90,3 @@ The application will be available at `http://localhost:5173`
 | POST | /api/exams/create | Create exam |
 | POST | /api/exams/submit/:examId | Submit exam |
 | GET | /api/results/my-results | Get student results |
-
-## License
-
-MIT
