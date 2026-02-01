@@ -19,11 +19,13 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 const examRoutes = require('./routes/exams');
 const resultRoutes = require('./routes/results');
+const adminRoutes = require('./routes/admin');
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/results', resultRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

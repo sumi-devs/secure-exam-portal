@@ -2,7 +2,7 @@ const Exam = require('../models/Exam');
 const ExamEnrollment = require('../models/ExamEnrollment');
 const Submission = require('../models/Submission');
 
-// Role-based permission definitions
+// ACL: Role-based permission definitions
 const permissions = {
     exam: {
         student: ['view'],

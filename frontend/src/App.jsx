@@ -7,6 +7,7 @@ import VerifyMFA from './pages/VerifyMFA';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyAdmit from './pages/VerifyAdmit';
 import Dashboard from './pages/Dashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import CreateExam from './pages/CreateExam';
 import TakeExam from './pages/TakeExam';
 import MyResults from './pages/MyResults';
@@ -78,6 +79,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard user={user} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminDashboard user={user} />
                 </ProtectedRoute>
               }
             />

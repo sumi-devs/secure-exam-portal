@@ -19,6 +19,11 @@ function Navbar({ user, onLogout }) {
                     <li>
                         <Link to="/dashboard" className="nav-link">Dashboard</Link>
                     </li>
+                    {user?.role === 'admin' && (
+                        <li>
+                            <Link to="/admin-dashboard" className="nav-link">Admin Panel</Link>
+                        </li>
+                    )}
                     <li>
                         <Link to="/exams" className="nav-link">Exams</Link>
                     </li>
