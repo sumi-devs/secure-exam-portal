@@ -11,7 +11,7 @@ const { validatePassword, hashPassword } = require('../utils/encryption');
 
 const router = express.Router();
 
-// Configure email transporter
+// This is the email I am using to send the OTP from (i.e. my own)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -20,7 +20,6 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Send email helper function
 async function sendEmail(to, subject, html) {
     try {
         await transporter.sendMail({
@@ -38,31 +37,25 @@ async function sendEmail(to, subject, html) {
 
 
 
-// ==================== REGISTRATION ====================
 router.post('/register', async (req, res) => {
     try {
         const { username, email, password, role } = req.body;
 
-        // Validate password
         if (!validatePassword(password)) {
             return res.status(400).json({
                 message: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
             });
         }
 
-        // Check if user exists
         const existingUser = await User.findOne({ $or: [{ username }, { email }] });
         if (existingUser) {
             return res.status(400).json({ message: 'Username or email already exists' });
         }
 
-        // Hash password
         const hashedPassword = await hashPassword(password);
 
-        // Create verification token
         const verificationToken = crypto.randomBytes(32).toString('hex');
 
-        // Create user
         const newUser = new User({
             username,
             email,
@@ -75,7 +68,7 @@ router.post('/register', async (req, res) => {
 
         await newUser.save();
 
-        // Send verification email
+
         const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
         await sendEmail(
             email,
@@ -86,7 +79,7 @@ router.post('/register', async (req, res) => {
        <p>This link will expire in 24 hours.</p>`
         );
 
-        // Log registration
+
         await AuditLog.create({
             userId: newUser._id,
             action: 'register',
@@ -103,7 +96,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// ==================== VERIFY EMAIL ====================
+
 router.get('/verify-email/:token', async (req, res) => {
     try {
         const user = await User.findOne({
@@ -126,12 +119,10 @@ router.get('/verify-email/:token', async (req, res) => {
     }
 });
 
-// ==================== LOGIN (Single Factor) ====================
+
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-
-        // Find user
         const user = await User.findOne({ username });
         if (!user) {
             await AuditLog.create({
@@ -143,12 +134,9 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
 
-        // Check if email is verified
         if (!user.emailVerified) {
             return res.status(401).json({ message: 'Please verify your email first' });
         }
-
-        // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             await AuditLog.create({
@@ -161,12 +149,9 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
 
-        // Check if account is active
         if (!user.isActive) {
             return res.status(401).json({ message: 'Account is inactive' });
         }
-
-        // Generate temporary token for MFA
         const tempToken = jwt.sign(
             { userId: user._id, stage: 'mfa_pending' },
             process.env.JWT_SECRET,
@@ -184,7 +169,7 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// ==================== SEND OTP ====================
+
 router.post('/send-otp', async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
@@ -204,15 +189,12 @@ router.post('/send-otp', async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Store OTP (hashed) and expiration time
         user.otpHash = await bcrypt.hash(otp, 12);
         user.otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
         await user.save();
 
-        // Send OTP via email
         await sendEmail(
             user.email,
             'Your Login OTP - Secure Exam Portal',
@@ -232,7 +214,7 @@ router.post('/send-otp', async (req, res) => {
     }
 });
 
-// ==================== VERIFY OTP ====================
+
 router.post('/verify-otp', async (req, res) => {
     try {
         const { otp } = req.body;
@@ -250,31 +232,24 @@ router.post('/verify-otp', async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check OTP expiration
         if (!user.otpExpires || new Date() > user.otpExpires) {
             return res.status(400).json({ message: 'OTP expired' });
         }
-
-        // Verify OTP
         const isOtpValid = await bcrypt.compare(otp, user.otpHash);
         if (!isOtpValid) {
             return res.status(400).json({ message: 'Invalid OTP' });
         }
 
-        // Clear OTP
         user.otpHash = null;
         user.otpExpires = null;
         user.lastLogin = new Date();
         await user.save();
-
-        // Generate JWT token (valid for 24 hours)
         const jwtToken = jwt.sign(
             { userId: user._id, username: user.username, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
-        // Log successful login
         await AuditLog.create({
             userId: user._id,
             action: 'login',
@@ -301,7 +276,7 @@ router.post('/verify-otp', async (req, res) => {
     }
 });
 
-// ==================== GET CURRENT USER ====================
+
 router.get('/me', async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
