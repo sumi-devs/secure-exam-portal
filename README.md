@@ -12,6 +12,43 @@ A full-stack web application for conducting secure online examinations with mult
 - **Grading**: Auto-grading for objective questions, manual grading interface for subjective questions
 - **Results**: Grade calculation, pass/fail status, detailed feedback
 
+## Access Control List (ACL)
+
+The application implements a Role-Based Access Control (RBAC) model with the following Access Control Matrix:
+
+### Roles
+- **Student**: End users who take exams
+- **Instructor**: Creates and manages exams, grades submissions
+- **Admin**: Full system access, manages all users and exams
+
+### Access Control Matrix
+
+| Resource | Student | Instructor | Admin |
+|----------|---------|------------|-------|
+| **Exam** | view | create, view, edit, delete | create, view, edit, delete |
+| **Submission** | create, view (own) | view, grade | view, delete |
+| **Results** | view (own) | view, edit | view, edit, delete |
+| **Users** | view (self) | view | create, view, edit, delete |
+| **Settings** | - | view | view, edit |
+
+### Policy Justification
+
+| Permission | Justification |
+|------------|---------------|
+| Students can only view exams | Students need to access exam content during the exam window |
+| Students can create submissions | Students must submit their answers |
+| Students can only view own results | Privacy - students should not see others' grades |
+| Instructors can create/edit exams | Instructors are responsible for exam content |
+| Instructors can grade submissions | Instructors evaluate student work |
+| Instructors cannot delete users | User management is admin-only for security |
+| Admins have full access | Admins need to manage the entire system |
+
+### Implementation
+
+Access control is enforced in `backend/middleware/authorization.js` using:
+- `checkPermission(resource, action)` - Validates user has permission for action
+- `requireRole(...roles)` - Restricts route access to specific roles
+
 ## Tech Stack
 
 **Frontend**: React, React Router, Axios, Vite
