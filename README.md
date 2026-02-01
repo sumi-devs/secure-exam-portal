@@ -29,7 +29,6 @@ The application implements a Role-Based Access Control (RBAC) model with the fol
 | **Submission** | create, view (own) | view, grade | view, delete |
 | **Results** | view (own) | view, edit | view, edit, delete |
 | **Users** | view (self) | view | create, view, edit, delete |
-| **Settings** | - | view | view, edit |
 
 ### Policy Justification
 
