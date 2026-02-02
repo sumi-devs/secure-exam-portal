@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 
-// Generate RSA key pair for user
+// RSA key pair for user
 function generateKeyPair() {
     return crypto.generateKeyPairSync('rsa', {
         modulusLength: 2048,
@@ -15,14 +15,14 @@ function generateKeyPair() {
     });
 }
 
-// Sign data with private key
+// signing data with private key
 function signData(data, privateKey) {
     const sign = crypto.createSign('SHA256');
     sign.update(JSON.stringify(data));
     return sign.sign(privateKey, 'hex');
 }
 
-// Verify signature with public key
+// verifying signature with public key
 function verifySignature(data, signature, publicKey) {
     try {
         const verify = crypto.createVerify('SHA256');
@@ -33,12 +33,10 @@ function verifySignature(data, signature, publicKey) {
     }
 }
 
-// Sign exam submission (student signs their own submission)
 function signSubmission(submissionData, studentPrivateKey) {
     return signData(submissionData, studentPrivateKey);
 }
 
-// Verify submission signature
 function verifySubmissionSignature(submissionData, signature, studentPublicKey) {
     return verifySignature(submissionData, signature, studentPublicKey);
 }

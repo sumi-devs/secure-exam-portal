@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 
-// Get encryption key from environment
+
 function getEncryptionKeyBuffer() {
     const key = process.env.ENCRYPTION_KEY;
     if (!key) {
@@ -9,7 +9,7 @@ function getEncryptionKeyBuffer() {
     return Buffer.from(key, 'hex');
 }
 
-// Encrypt exam questions using AES-256-CBC
+// encrypting with AES-256-CBC
 function encryptExamQuestions(questionsData) {
     try {
         const iv = crypto.randomBytes(16);
@@ -20,7 +20,6 @@ function encryptExamQuestions(questionsData) {
         let encrypted = cipher.update(JSON.stringify(questionsData), 'utf8', 'hex');
         encrypted += cipher.final('hex');
 
-        // Return IV + encrypted data (IV needed for decryption)
         return iv.toString('hex') + ':' + encrypted;
     } catch (error) {
         console.error('Encryption error:', error);
@@ -28,7 +27,7 @@ function encryptExamQuestions(questionsData) {
     }
 }
 
-// Decrypt exam questions
+
 function decryptExamQuestions(encryptedData) {
     try {
         const [ivHex, encryptedHex] = encryptedData.split(':');
@@ -47,22 +46,19 @@ function decryptExamQuestions(encryptedData) {
     }
 }
 
-// Encrypt student answers (same logic as questions)
 function encryptStudentAnswers(answersData) {
     return encryptExamQuestions(answersData);
 }
 
-// Decrypt student answers
+
 function decryptStudentAnswers(encryptedAnswers) {
     return decryptExamQuestions(encryptedAnswers);
 }
 
-// Encrypt sensitive user data
 function encryptSensitiveData(data) {
     return encryptExamQuestions(data);
 }
 
-// Decrypt sensitive data
 function decryptSensitiveData(encryptedData) {
     return decryptExamQuestions(encryptedData);
 }

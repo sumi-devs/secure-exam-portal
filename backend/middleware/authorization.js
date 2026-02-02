@@ -2,7 +2,7 @@ const Exam = require('../models/Exam');
 const ExamEnrollment = require('../models/ExamEnrollment');
 const Submission = require('../models/Submission');
 
-// ACL: Role-based permission definitions
+// role-based permission definitions
 const permissions = {
     exam: {
         student: ['view'],
@@ -31,14 +31,12 @@ const permissions = {
     }
 };
 
-// Check permission middleware
 const checkPermission = (requiredResource, requiredAction) => {
     return async (req, res, next) => {
         try {
             const userId = req.user.userId;
             const userRole = req.user.role;
 
-            // Admin has all permissions
             if (userRole === 'admin') {
                 return next();
             }
@@ -50,8 +48,6 @@ const checkPermission = (requiredResource, requiredAction) => {
                     message: 'Unauthorized. You do not have permission to perform this action.'
                 });
             }
-
-            // Additional resource-specific checks
             if (requiredResource === 'exam' && requiredAction === 'view') {
                 const examId = req.params.examId;
                 if (examId) {
@@ -62,7 +58,6 @@ const checkPermission = (requiredResource, requiredAction) => {
                     }
 
                     if (userRole === 'student') {
-                        // Check if student is enrolled
                         const enrollment = await ExamEnrollment.findOne({
                             studentId: userId,
                             examId: examId
@@ -74,7 +69,6 @@ const checkPermission = (requiredResource, requiredAction) => {
                             });
                         }
 
-                        // Check if exam is in progress (Policy: within time window + 5 min grace)
                         const now = new Date();
                         const graceEndTime = new Date(exam.endTime.getTime() + 5 * 60000);
 
@@ -86,7 +80,6 @@ const checkPermission = (requiredResource, requiredAction) => {
                     }
 
                     if (userRole === 'instructor') {
-                        // Check if instructor created this exam
                         if (exam.instructorId.toString() !== userId) {
                             return res.status(403).json({
                                 message: 'You can only view exams you created.'
@@ -106,14 +99,13 @@ const checkPermission = (requiredResource, requiredAction) => {
                     }
 
                     if (userRole === 'student') {
-                        // Student can only view own submission
+
                         if (submission.studentId.toString() !== userId) {
                             return res.status(403).json({
                                 message: 'You can only view your own submissions.'
                             });
                         }
 
-                        // Student can only view after exam ends
                         const now = new Date();
                         if (now < submission.examId.endTime) {
                             return res.status(403).json({
@@ -123,7 +115,7 @@ const checkPermission = (requiredResource, requiredAction) => {
                     }
 
                     if (userRole === 'instructor') {
-                        // Instructor can only view submissions for exams they created
+
                         if (submission.examId.instructorId.toString() !== userId) {
                             return res.status(403).json({
                                 message: 'You can only view submissions for exams you created.'
@@ -141,7 +133,6 @@ const checkPermission = (requiredResource, requiredAction) => {
     };
 };
 
-// Role-based route access
 const requireRole = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.user.role)) {
